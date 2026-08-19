@@ -1,0 +1,153 @@
+:root {
+  --ivy-corner-size: clamp(96px, 13vw, 220px);
+  --ivy-edge-size: clamp(16px, 2vw, 28px);
+  --frame-inset: clamp(30px, 4.4vw, 70px);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#carousel-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(ellipse at center, var(--color-forest) 0%, var(--color-forest-dark) 75%);
+}
+
+/* Passe-partout crema attorno alla foto, come una vera cornice */
+.frame-mat {
+  position: absolute;
+  inset: var(--frame-inset);
+  background: var(--color-cream);
+  border-radius: 6px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  padding: clamp(10px, 1.6vw, 24px);
+}
+
+.photo-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-forest);
+}
+
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.photo.is-active {
+  opacity: 1;
+}
+
+/* Cornice di edera: angoli con ciuffi di foglie + tralci lungo i bordi */
+.ivy-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ivy-corner {
+  position: absolute;
+  width: var(--ivy-corner-size);
+  height: var(--ivy-corner-size);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.ivy-tl {
+  top: 0;
+  left: 0;
+}
+
+.ivy-tr {
+  top: 0;
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.ivy-bl {
+  bottom: 0;
+  left: 0;
+  transform: scaleY(-1);
+}
+
+.ivy-br {
+  bottom: 0;
+  right: 0;
+  transform: scale(-1, -1);
+}
+
+.ivy-edge {
+  position: absolute;
+  opacity: 0.9;
+}
+
+.ivy-edge-top,
+.ivy-edge-bottom {
+  left: var(--ivy-corner-size);
+  right: var(--ivy-corner-size);
+  height: var(--ivy-edge-size);
+  background-image: url('/img/vine-strip-h.svg');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+.ivy-edge-top {
+  top: 0;
+}
+
+.ivy-edge-bottom {
+  bottom: 0;
+  transform: scaleY(-1);
+}
+
+.ivy-edge-left,
+.ivy-edge-right {
+  top: var(--ivy-corner-size);
+  bottom: var(--ivy-corner-size);
+  width: var(--ivy-edge-size);
+  background-image: url('/img/vine-strip-v.svg');
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+}
+
+.ivy-edge-left {
+  left: 0;
+}
+
+.ivy-edge-right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--color-cream-dim);
+  font-family: var(--font-tagline);
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  padding: 0 10vw;
+  z-index: 6;
+}
+
+.empty-state[hidden] {
+  display: none;
+}

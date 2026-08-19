@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Ellera Polcanto — Amministrazione</title>
+  <link rel="stylesheet" href="/css/theme.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <!-- Vista login -->
+  <section id="login-view" hidden>
+    <form id="login-form" class="card login-card" novalidate>
+      <div class="brand">
+        <img class="brand-icon" src="/img/ivy-corner.svg" alt="" />
+        <h1>Area amministrazione</h1>
+        <p class="brand-tagline">Ellera Polcanto</p>
+      </div>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <p class="form-error" id="login-error"></p>
+      <button type="submit" class="btn-primary" style="width:100%;">Accedi</button>
+    </form>
+  </section>
+
+  <!-- Vista dashboard -->
+  <section id="dashboard-view" hidden>
+    <header class="admin-header">
+      <h1>Ellera Polcanto <span class="tagline">— pannello carosello</span></h1>
+      <div class="session-info">
+        <span id="session-email"></span>
+        <button id="logout-btn" class="btn-secondary" type="button">Esci</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Intervallo del carosello</h2>
+        <form id="settings-form" class="settings-row" novalidate>
+          <div class="field">
+            <label for="interval-input">Secondi tra una foto e l'altra</label>
+            <input id="interval-input" name="intervalSeconds" type="number" min="2" max="3600" step="1" required />
+          </div>
+          <button type="submit" class="btn-primary">Salva</button>
+          <span class="form-status" id="settings-status"></span>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Carica nuove foto</h2>
+        <p class="hint-text">
+          Le foto vengono mostrate in ordine alfabetico per nome file: per controllare l'ordine,
+          rinomina i file (es. <code>01-arrivo.jpg</code>, <code>02-pranzo.jpg</code>…) prima di caricarli.
+        </p>
+        <label class="dropzone" id="dropzone" for="file-input">
+          <span id="dropzone-label">Trascina qui le foto, oppure clicca per selezionarle<br />(JPG, PNG, WEBP o GIF, max 20&nbsp;MB ciascuna)</span>
+          <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+        </label>
+        <p class="form-status" id="upload-status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Foto attuali</h2>
+        <div class="gallery" id="gallery"></div>
+      </section>
+    </main>
+  </section>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

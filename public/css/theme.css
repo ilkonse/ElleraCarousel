@@ -1,0 +1,56 @@
+/*
+  Palette ispirata a ellerapolcanto.org: verde oliva/muschio come colore
+  guida, verde bosco scuro per gli sfondi pieni, crema/avorio per i testi
+  chiari e le "cornici" tipo passe-partout.
+*/
+:root {
+  --color-forest-dark: #1b2118;
+  --color-forest: #232b1f;
+  --color-olive: #6f7d45;
+  --color-olive-dark: #55602f;
+  --color-olive-light: #9aab6c;
+  --color-cream: #f7f5ef;
+  --color-cream-dim: #ece8dc;
+  --color-ink: #232b1f;
+  --color-white: #ffffff;
+  --color-danger: #a1402c;
+  --color-danger-dark: #7e3020;
+
+  --font-heading: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Segoe UI', Arial, sans-serif;
+  --font-tagline: Georgia, 'Times New Roman', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-forest-dark);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  margin: 0 0 0.6em;
+}
+
+a {
+  color: var(--color-olive-dark);
+}
+
+button {
+  font-family: inherit;
+}
