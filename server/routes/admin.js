@@ -6,8 +6,9 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 
-const { IMAGE_MIME_TYPES, IMAGE_EXTENSIONS, MAX_UPLOAD_BYTES } = require('../config');
-const { findByEmail } = require('../lib/adminsStore');
+const crypto = require('crypto');
+const { IMAGE_MIME_TYPES, IMAGE_EXTENSIONS, MAX_UPLOAD_BYTES, SESSION_SECRET, DATA_BACKEND } = require('../config');
+const { findByEmail, loadAdmins, addAdmin } = require('../lib/adminsStore');
 const { listImages, saveImage, deleteImage } = require('../lib/images');
 const { getSettings, setIntervalSeconds } = require('../lib/settingsStore');
 const { requireAuth } = require('../middleware/requireAuth');
@@ -61,6 +62,41 @@ router.post('/login', loginLimiter, requireAjax, async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+});
+
+// --- Bootstrap temporaneo del primo admin di produzione ---
+// TODO: rimuovere questa rotta subito dopo aver creato il primo admin reale.
+// Protetta da SESSION_SECRET (che nessun altro conosce) invece che da una
+// sessione, perché serve proprio a creare il primo admin quando non ce n'è
+// ancora nessuno. Si disattiva da sola non appena esiste già un admin, così
+// anche restando online per errore non permette di aggiungerne altri.
+router.post('/bootstrap', loginLimiter, async (req, res) => {
+  try {
+    if (DATA_BACKEND !== 'redis') {
+      return res.status(404).json({ error: 'Non disponibile.' });
+    }
+    const provided = Buffer.from(String(req.headers['x-bootstrap-secret'] || ''));
+    const expected = Buffer.from(SESSION_SECRET);
+    if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {
+      return res.status(404).json({ error: 'Non disponibile.' });
+    }
+    const admins = await loadAdmins();
+    if (admins.length > 0) {
+      return res.status(403).json({ error: 'Esiste già almeno un admin, bootstrap disattivato.' });
+    }
+    const { email, password } = req.body || {};
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Email non valida.' });
+    }
+    if (!password || password.length < 10) {
+      return res.status(400).json({ error: 'La password deve avere almeno 10 caratteri.' });
+    }
+    const passwordHash = bcrypt.hashSync(password, 12);
+    const admin = await addAdmin({ email, passwordHash });
+    res.json({ ok: true, email: admin.email });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Errore interno.' });
   }
 });
 

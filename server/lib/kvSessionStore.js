@@ -1,7 +1,7 @@
 'use strict';
 
 const session = require('express-session');
-const { getRedis } = require('./redisClient');
+const redis = require('./redisClient');
 
 const PREFIX = 'ellera:sess:';
 const DEFAULT_TTL_SECONDS = 12 * 60 * 60; // deve combaciare col maxAge del cookie
@@ -15,15 +15,15 @@ function ttlSecondsFor(sessionData) {
 }
 
 /**
- * Store di sessione per express-session basato su Redis (Upstash REST),
- * necessario su Vercel: le funzioni serverless non condividono memoria tra
- * invocazioni, quindi il MemoryStore di default perderebbe le sessioni ad
- * ogni richiesta gestita da un'istanza diversa.
+ * Store di sessione per express-session basato su Redis, necessario su
+ * Vercel: le funzioni serverless non condividono memoria tra invocazioni,
+ * quindi il MemoryStore di default perderebbe le sessioni ad ogni richiesta
+ * gestita da un'istanza diversa.
  */
 class KvSessionStore extends session.Store {
   async get(sid, cb) {
     try {
-      const data = await getRedis().get(PREFIX + sid);
+      const data = await redis.getJson(PREFIX + sid);
       cb(null, data || null);
     } catch (err) {
       cb(err);
@@ -32,7 +32,7 @@ class KvSessionStore extends session.Store {
 
   async set(sid, sessionData, cb) {
     try {
-      await getRedis().set(PREFIX + sid, sessionData, { ex: ttlSecondsFor(sessionData) });
+      await redis.setJson(PREFIX + sid, sessionData, { ex: ttlSecondsFor(sessionData) });
       cb(null);
     } catch (err) {
       cb(err);
@@ -41,7 +41,7 @@ class KvSessionStore extends session.Store {
 
   async destroy(sid, cb) {
     try {
-      await getRedis().del(PREFIX + sid);
+      await redis.del(PREFIX + sid);
       cb(null);
     } catch (err) {
       cb(err);
@@ -50,7 +50,7 @@ class KvSessionStore extends session.Store {
 
   async touch(sid, sessionData, cb) {
     try {
-      await getRedis().expire(PREFIX + sid, ttlSecondsFor(sessionData));
+      await redis.expire(PREFIX + sid, ttlSecondsFor(sessionData));
       cb(null);
     } catch (err) {
       cb(err);

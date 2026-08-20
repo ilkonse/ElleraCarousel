@@ -29,16 +29,23 @@ if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.includes('cambia-q
 
 // Backend di storage per foto/dati: rilevati automaticamente dalla presenza
 // delle variabili d'ambiente che Vercel inietta quando si collega un Blob
-// store e un database Redis (KV) al progetto. In locale, senza queste
-// variabili, si usa disco locale + file JSON (comportamento invariato).
-// Supporta sia i nomi storici di Vercel KV sia quelli dell'integrazione
-// Redis del Vercel Marketplace (Upstash), che possono variare leggermente.
-const REDIS_URL =
+// store e un database Redis al progetto. In locale, senza queste variabili,
+// si usa disco locale + file JSON (comportamento invariato).
+// Il collegamento Redis su Vercel può avvenire in due modi diversi, con
+// variabili diverse, entrambi supportati:
+// - prodotto "Redis" del Marketplace: una singola REDIS_URL (redis://...),
+//   protocollo nativo, usata con ioredis;
+// - Vercel KV storico / integrazione Upstash: KV_REST_API_URL +
+//   KV_REST_API_TOKEN (o gli equivalenti UPSTASH_REDIS_REST_*), un'API
+//   REST HTTP, usata con @upstash/redis.
+const REDIS_NATIVE_URL = process.env.REDIS_URL || '';
+const REDIS_REST_URL =
   process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
-const REDIS_TOKEN =
+const REDIS_REST_TOKEN =
   process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
-const DATA_BACKEND = REDIS_URL && REDIS_TOKEN ? 'redis' : 'local';
+const DATA_BACKEND =
+  REDIS_NATIVE_URL || (REDIS_REST_URL && REDIS_REST_TOKEN) ? 'redis' : 'local';
 const IMAGE_BACKEND = process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'local';
 
 if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
@@ -75,6 +82,7 @@ module.exports = {
   SITE_NAME: process.env.SITE_NAME || 'Ellera Polcanto',
   DATA_BACKEND,
   IMAGE_BACKEND,
-  REDIS_URL,
-  REDIS_TOKEN,
+  REDIS_NATIVE_URL,
+  REDIS_REST_URL,
+  REDIS_REST_TOKEN,
 };

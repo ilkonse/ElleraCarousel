@@ -8,13 +8,13 @@ const {
   MAX_INTERVAL_SECONDS,
 } = require('../config');
 const localJson = require('./jsonStore');
-const { getRedis } = require('./redisClient');
+const redis = require('./redisClient');
 
 const REDIS_KEY = 'ellera:settings';
 
 async function readRaw() {
   if (DATA_BACKEND === 'redis') {
-    const settings = await getRedis().get(REDIS_KEY);
+    const settings = await redis.getJson(REDIS_KEY);
     return settings || { intervalSeconds: DEFAULT_INTERVAL_SECONDS };
   }
   return localJson.readJson(SETTINGS_FILE, { intervalSeconds: DEFAULT_INTERVAL_SECONDS });
@@ -22,7 +22,7 @@ async function readRaw() {
 
 async function writeRaw(settings) {
   if (DATA_BACKEND === 'redis') {
-    await getRedis().set(REDIS_KEY, settings);
+    await redis.setJson(REDIS_KEY, settings);
     return;
   }
   localJson.writeJson(SETTINGS_FILE, settings);

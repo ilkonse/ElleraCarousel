@@ -2,13 +2,13 @@
 
 const { ADMINS_FILE, DATA_BACKEND } = require('../config');
 const localJson = require('./jsonStore');
-const { getRedis } = require('./redisClient');
+const redis = require('./redisClient');
 
 const REDIS_KEY = 'ellera:admins';
 
 async function loadAdmins() {
   if (DATA_BACKEND === 'redis') {
-    const admins = await getRedis().get(REDIS_KEY);
+    const admins = await redis.getJson(REDIS_KEY);
     return admins || [];
   }
   return localJson.readJson(ADMINS_FILE, []);
@@ -16,7 +16,7 @@ async function loadAdmins() {
 
 async function saveAdmins(admins) {
   if (DATA_BACKEND === 'redis') {
-    await getRedis().set(REDIS_KEY, admins);
+    await redis.setJson(REDIS_KEY, admins);
     return;
   }
   localJson.writeJson(ADMINS_FILE, admins);

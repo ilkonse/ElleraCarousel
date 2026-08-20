@@ -7,3 +7,6 @@ data/settings.json
 data/images/*
 !data/images/.gitkeep
 npm-debug.log*
+
+.vercel
+.env*
