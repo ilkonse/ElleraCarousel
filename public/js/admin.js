@@ -64,10 +64,14 @@
 
   // Deriva un'etichetta più leggibile dal nome file (es. "1_pre-film.jpg" -> "Pre film"),
   // solo per la mini-anteprima "In onda": il nome file vero resta quello mostrato in galleria.
+  // Se il file ha un nome tutto numerico (tipico di export da telefono/social,
+  // es. "756779734_...731_n.jpg") non resta quasi nulla dopo aver tolto le
+  // cifre iniziali: in quel caso mostra il nome file originale invece di
+  // un'etichetta di 1-2 lettere poco utile.
   function label(filename) {
     const base = String(filename).replace(/\.[^.]+$/, '').replace(/^[\d\W_]+/, '');
     const words = base.replace(/[-_]+/g, ' ').trim();
-    return words ? words.charAt(0).toUpperCase() + words.slice(1) : filename;
+    return words.length >= 3 ? words.charAt(0).toUpperCase() + words.slice(1) : filename;
   }
 
   function showStatus(el, message, isError) {
