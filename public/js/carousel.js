@@ -98,11 +98,23 @@
     }
     // Riallinea periodicamente elenco foto e intervallo con quanto impostato
     // dall'amministratore, senza bisogno di ricaricare manualmente la pagina.
-    // Intervallo breve apposta: chi carica una foto da telefono vuole vederla
-    // comparire quasi subito sullo schermo in sede, e le due richieste sono
-    // leggere (solo elenco file + un numero), non foto vere e proprie.
-    refreshTimer = setInterval(refreshData, 8 * 1000);
+    // Intervallo breve apposta: chi cambia l'ordine, nasconde/mostra o carica
+    // una foto dal pannello vuole vederlo riflesso sullo schermo in sede
+    // quasi subito. Le due richieste di controllo sono leggere (solo elenco
+    // file + un numero), non le foto vere e proprie: un polling frequente
+    // costa pochissimo. Un vero push (WebSocket/SSE) richiederebbe una
+    // connessione tenuta aperta, che su funzioni serverless si spegne e
+    // riconnette di continuo (costa di più e non è più affidabile) senza un
+    // reale guadagno percepibile per un carosello di foto.
+    refreshTimer = setInterval(refreshData, 3 * 1000);
   }
+
+  // Se lo schermo si riattiva dopo essere rimasto in background (i browser
+  // rallentano i timer delle schede non visibili), riallinea subito invece
+  // di aspettare il prossimo giro di polling.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshData();
+  });
 
   start();
 })();
