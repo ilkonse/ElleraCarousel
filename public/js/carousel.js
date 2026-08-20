@@ -98,7 +98,10 @@
     }
     // Riallinea periodicamente elenco foto e intervallo con quanto impostato
     // dall'amministratore, senza bisogno di ricaricare manualmente la pagina.
-    refreshTimer = setInterval(refreshData, 45 * 1000);
+    // Intervallo breve apposta: chi carica una foto da telefono vuole vederla
+    // comparire quasi subito sullo schermo in sede, e le due richieste sono
+    // leggere (solo elenco file + un numero), non foto vere e proprie.
+    refreshTimer = setInterval(refreshData, 8 * 1000);
   }
 
   start();

@@ -334,6 +334,7 @@ button:disabled {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   width: 48px;
   height: 48px;
   font-size: 22px;
@@ -343,6 +344,10 @@ button:disabled {
   border: 1.5px dashed var(--bone-dim);
   border-radius: 14px;
   cursor: pointer;
+}
+
+.upload-btn-text {
+  display: none;
 }
 
 .upload-btn:hover,
@@ -809,4 +814,102 @@ button:disabled {
   text-transform: uppercase;
   color: var(--muted);
   margin-top: 8px;
+}
+
+/* --- Versione mobile ---
+   La sidebar desktop (logo, nav, "In onda", sessione) diventa una barra
+   scura in alto (logo + nav, quest'ultima agganciata in cima durante lo
+   scroll) e una in fondo (In onda + sessione), col contenuto principale
+   in mezzo: così chi apre il pannello dal telefono vede subito Foto e il
+   pulsante di upload, senza dover scrollare oltre un riquadro pensato per
+   una sidebar larga.
+   "display: contents" sulla sidebar la fa sparire come scatola: i suoi
+   figli diventano elementi diretti del flex .dashboard e si possono
+   riordinare con `order` rispetto a .content, senza toccare l'HTML. Per
+   questo ognuno dei figli deve riprendersi qui sfondo/padding che prima
+   arrivavano dalla sidebar. */
+@media (max-width: 760px) {
+  .dashboard:not([hidden]) {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    display: contents;
+  }
+
+  .brand-block {
+    order: 1;
+    background: var(--rail);
+    padding: 18px 20px 10px;
+  }
+
+  .nav {
+    order: 2;
+    flex-direction: row;
+    gap: 8px;
+    background: var(--rail);
+    padding: 0 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .nav-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .content {
+    order: 3;
+    padding: 22px 16px 40px;
+  }
+
+  .onair-card {
+    order: 4;
+    margin: 0 16px 14px;
+    background: var(--rail);
+  }
+
+  .session-row {
+    order: 5;
+    margin: 0 16px 20px;
+    padding: 12px 14px;
+    background: var(--rail);
+    border-radius: 14px;
+    border-top: none;
+  }
+
+  /* Su mobile l'upload è l'azione principale: pulsante largo con
+     etichetta invece del solo "+" quadrato pensato per il mouse. */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .upload-btn {
+    width: 100%;
+    height: 50px;
+    border-radius: 14px;
+  }
+
+  .upload-btn-text {
+    display: inline;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Bersagli un po' più comodi per un dito che per un puntatore mouse. */
+  .select-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .delete-btn {
+    width: 38px;
+  }
+
+  .action-half {
+    padding: 9px 4px;
+  }
 }
