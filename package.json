@@ -4,7 +4,6 @@
   "description": "Carosello fotografico a tutto schermo con cornice di edera, e pannello admin per gestire foto e intervallo.",
   "private": true,
   "type": "commonjs",
-  "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
