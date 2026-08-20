@@ -1,24 +1,27 @@
 /*
-  Palette ispirata a ellerapolcanto.org: verde oliva/muschio come colore
-  guida, verde bosco scuro per gli sfondi pieni, crema/avorio per i testi
-  chiari e le "cornici" tipo passe-partout.
+  Palette e tipografia del redesign "Ellera Polcanto v3" (handoff da Claude
+  Design): verde muschio come colore guida, verde bosco scuro per gli sfondi
+  pieni (sidebar admin, cornice del carosello), crema/avorio per i testi
+  chiari e gli sfondi del pannello. Stessa famiglia cromatica della palette
+  precedente, riorganizzata per un vero layout da dashboard.
 */
 :root {
-  --color-forest-dark: #1b2118;
-  --color-forest: #232b1f;
-  --color-olive: #6f7d45;
-  --color-olive-dark: #55602f;
-  --color-olive-light: #9aab6c;
-  --color-cream: #f7f5ef;
-  --color-cream-dim: #ece8dc;
-  --color-ink: #232b1f;
-  --color-white: #ffffff;
-  --color-danger: #a1402c;
-  --color-danger-dark: #7e3020;
+  --ink: #16201a;
+  --rail: #1b271d;
+  --stage: #0f150d;
+  --moss: #5c7048;
+  --moss-deep: #3d4d2f;
+  --sage: #b9c6a4;
+  --bone: #f5f2ea;
+  --bone-soft: #faf8f2;
+  --bone-dim: #e6e1d3;
+  --muted: #8a8878;
+  --danger: #9a4a38;
+  --danger-dark: #7e3a2c;
+  --white: #ffffff;
 
-  --font-heading: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Segoe UI', Arial, sans-serif;
-  --font-tagline: Georgia, 'Times New Roman', serif;
+  --font-display: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  --font-body: 'Karla', 'Helvetica Neue', Arial, sans-serif;
 }
 
 * {
@@ -33,24 +36,31 @@ body {
 
 body {
   font-family: var(--font-body);
-  color: var(--color-ink);
-  background: var(--color-forest-dark);
+  color: var(--ink);
+  background: var(--rail);
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
-h2,
-h3 {
-  font-family: var(--font-heading);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-  margin: 0 0 0.6em;
+h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0 0 0.5em;
 }
 
 a {
-  color: var(--color-olive-dark);
+  color: var(--moss);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--moss-deep);
 }
 
 button {
   font-family: inherit;
+}
+
+input::placeholder {
+  color: var(--muted);
 }

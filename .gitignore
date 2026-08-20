@@ -4,6 +4,7 @@ node_modules/
 .vercel
 data/admins.json
 data/settings.json
+data/images-meta.json
 data/images/*
 !data/images/.gitkeep
 npm-debug.log*

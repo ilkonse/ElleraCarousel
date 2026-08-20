@@ -5,13 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Ellera Polcanto — Amministrazione</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Karla:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="/css/theme.css" />
   <link rel="stylesheet" href="/css/admin.css" />
 </head>
 <body>
   <!-- Vista login -->
   <section id="login-view" hidden>
-    <form id="login-form" class="card login-card" novalidate>
+    <form id="login-form" class="login-card" novalidate>
       <div class="brand">
         <img class="brand-icon" src="/img/ivy-corner.svg" alt="" />
         <h1>Area amministrazione</h1>
@@ -26,52 +32,116 @@
         <input id="login-password" name="password" type="password" autocomplete="current-password" required />
       </div>
       <p class="form-error" id="login-error"></p>
-      <button type="submit" class="btn-primary" style="width:100%;">Accedi</button>
+      <button type="submit" class="btn-primary btn-block">Accedi</button>
     </form>
   </section>
 
   <!-- Vista dashboard -->
-  <section id="dashboard-view" hidden>
-    <header class="admin-header">
-      <h1>Ellera Polcanto <span class="tagline">— pannello carosello</span></h1>
-      <div class="session-info">
-        <span id="session-email"></span>
-        <button id="logout-btn" class="btn-secondary" type="button">Esci</button>
+  <div id="dashboard-view" class="dashboard" hidden>
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-name">Ellera</div>
+        <div class="brand-sub">Pannello di controllo</div>
       </div>
-    </header>
 
-    <main>
-      <section class="card">
-        <h2>Intervallo del carosello</h2>
-        <form id="settings-form" class="settings-row" novalidate>
-          <div class="field">
-            <label for="interval-input">Secondi tra una foto e l'altra</label>
-            <input id="interval-input" name="intervalSeconds" type="number" min="2" max="3600" step="1" required />
+      <nav class="nav">
+        <button type="button" id="nav-foto" class="nav-btn">
+          <span>Foto</span><span class="nav-count" id="nav-foto-count"></span>
+        </button>
+        <button type="button" id="nav-carosello" class="nav-btn">
+          <span>Carosello</span><span class="nav-count" id="nav-carosello-count"></span>
+        </button>
+      </nav>
+
+      <div class="onair-card">
+        <div class="onair-label"><span class="onair-dot"></span>In onda</div>
+        <div id="onair-content"></div>
+        <button type="button" id="open-public-btn" class="btn-ghost btn-block">Apri il carosello</button>
+      </div>
+
+      <div class="session-row">
+        <span id="session-email" class="session-email"></span>
+        <button type="button" id="logout-btn" class="btn-pill">Esci</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <!-- SEZIONE FOTO -->
+      <section id="section-foto" class="section">
+        <div class="section-header">
+          <div>
+            <h1>Foto</h1>
+            <p class="section-hint">
+              Trascina le foto per cambiare l'ordine di scorrimento. Le foto nascoste restano
+              caricate ma non vanno in onda.
+            </p>
           </div>
-          <button type="submit" class="btn-primary">Salva</button>
-          <span class="form-status" id="settings-status"></span>
-        </form>
+          <label for="file-input" id="upload-btn" class="upload-btn" title="Carica foto">
+            <span>+</span>
+            <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
+          </label>
+        </div>
+
+        <div id="selection-bar" class="selection-bar">
+          <span id="selection-label" class="selection-label"></span>
+          <button type="button" id="bulk-hide" class="btn-chip">Nascondi</button>
+          <button type="button" id="bulk-show" class="btn-chip">Mostra</button>
+          <button type="button" id="bulk-delete" class="btn-chip btn-chip-danger"></button>
+          <button type="button" id="clear-selection" class="btn-clear">Deseleziona</button>
+        </div>
+
+        <p id="upload-status" class="status"></p>
+
+        <div id="gallery-empty" class="gallery-empty" hidden>
+          <label for="file-input" class="gallery-empty-inner">
+            <span class="gallery-empty-icon">+</span>
+            <span class="gallery-empty-title">Nessuna foto caricata</span>
+            <span class="gallery-empty-hint">Trascina qui le foto oppure clicca per selezionarle · JPG, PNG, WEBP, GIF · max 20&nbsp;MB</span>
+          </label>
+        </div>
+
+        <div id="gallery" class="gallery"></div>
       </section>
 
-      <section class="card">
-        <h2>Carica nuove foto</h2>
-        <p class="hint-text">
-          Le foto vengono mostrate in ordine alfabetico per nome file: per controllare l'ordine,
-          rinomina i file (es. <code>01-arrivo.jpg</code>, <code>02-pranzo.jpg</code>…) prima di caricarli.
-        </p>
-        <label class="dropzone" id="dropzone" for="file-input">
-          <span id="dropzone-label">Trascina qui le foto, oppure clicca per selezionarle<br />(JPG, PNG, WEBP o GIF, max 20&nbsp;MB ciascuna)</span>
-          <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
-        </label>
-        <p class="form-status" id="upload-status"></p>
-      </section>
+      <!-- SEZIONE CAROSELLO -->
+      <section id="section-carosello" class="section" hidden>
+        <h1>Carosello</h1>
+        <p class="section-hint">Come scorre la proiezione sullo schermo in sede.</p>
 
-      <section class="card">
-        <h2>Foto attuali</h2>
-        <div class="gallery" id="gallery"></div>
+        <section class="panel">
+          <h2>Intervallo</h2>
+          <p class="panel-hint">Secondi tra una foto e l'altra.</p>
+          <form id="settings-form" class="stepper-row" novalidate>
+            <div class="stepper">
+              <button type="button" id="interval-dec" class="stepper-btn">−</button>
+              <input id="interval-input" name="intervalSeconds" type="number" min="2" max="3600" step="1" required />
+              <button type="button" id="interval-inc" class="stepper-btn">+</button>
+            </div>
+            <button type="submit" class="btn-primary">Salva</button>
+            <span id="settings-status" class="status"></span>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Stato</h2>
+          <div class="stats-row">
+            <div class="stat">
+              <div class="stat-value" id="stat-visible"></div>
+              <div class="stat-label">In rotazione</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="stat-hidden"></div>
+              <div class="stat-label">Nascoste</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="stat-cycle"></div>
+              <div class="stat-label">Giro completo</div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
-  </section>
+  </div>
 
   <script src="/js/admin.js"></script>
 </body>

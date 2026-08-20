@@ -54,4 +54,18 @@ async function deleteImage(filename) {
   fs.unlinkSync(fullPath); // lancia ENOENT se il file non esiste
 }
 
-module.exports = { listImages, saveImage, deleteImage };
+async function renameImage(oldFilename, newName) {
+  const oldPath = resolveImagePath(oldFilename);
+  if (!fs.existsSync(oldPath)) {
+    const err = new Error('File non trovato.');
+    err.code = 'ENOENT';
+    throw err;
+  }
+  const base = sanitizeFilename(newName);
+  const existing = new Set(fs.readdirSync(IMAGES_DIR).filter((f) => f !== oldFilename));
+  const filename = nextAvailableName(base, existing);
+  fs.renameSync(oldPath, path.join(IMAGES_DIR, filename));
+  return { filename, url: toUrl(filename) };
+}
+
+module.exports = { listImages, saveImage, deleteImage, renameImage };

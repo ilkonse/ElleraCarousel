@@ -1,6 +1,6 @@
 'use strict';
 
-const { put, list, del } = require('@vercel/blob');
+const { put, list, del, rename } = require('@vercel/blob');
 const { sanitizeFilename, nextAvailableName } = require('./sanitize');
 
 const PREFIX = 'images/';
@@ -45,4 +45,24 @@ async function deleteImage(filename) {
   await del(match.url);
 }
 
-module.exports = { listImages, saveImage, deleteImage };
+async function renameImage(oldFilename, newName) {
+  const { blobs } = await list({ prefix: PREFIX });
+  const match = blobs.find((b) => filenameFromPathname(b.pathname) === oldFilename);
+  if (!match) {
+    const err = new Error('File non trovato.');
+    err.code = 'ENOENT';
+    throw err;
+  }
+  const base = sanitizeFilename(newName);
+  const existing = new Set(
+    blobs.map((b) => filenameFromPathname(b.pathname)).filter((f) => f !== oldFilename)
+  );
+  const filename = nextAvailableName(base, existing);
+  const blob = await rename(match.pathname, PREFIX + filename, {
+    access: 'public',
+    addRandomSuffix: false,
+  });
+  return { filename, url: blob.url };
+}
+
+module.exports = { listImages, saveImage, deleteImage, renameImage };

@@ -24,7 +24,11 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
+        // Google Fonts (Libre Baskerville, Karla): il foglio di stile arriva
+        // da fonts.googleapis.com, i file dei font veri e propri da
+        // fonts.gstatic.com (vedi fontSrc sotto).
+        styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         // 'data:' per le miniature inline; il dominio Vercel Blob quando le
         // foto sono servite da lì invece che dal nostro /images locale.
         imgSrc: ["'self'", 'data:', 'https://*.public.blob.vercel-storage.com'],

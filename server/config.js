@@ -8,6 +8,7 @@ const DATA_DIR = path.join(ROOT_DIR, 'data');
 const IMAGES_DIR = path.join(DATA_DIR, 'images');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const IMAGES_META_FILE = path.join(DATA_DIR, 'images-meta.json');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
@@ -69,6 +70,7 @@ module.exports = {
   IMAGES_DIR,
   ADMINS_FILE,
   SETTINGS_FILE,
+  IMAGES_META_FILE,
   PUBLIC_DIR,
   IMAGE_EXTENSIONS,
   IMAGE_MIME_TYPES,

@@ -2,7 +2,8 @@
 
 // Seleziona il backend di storage per le foto in base alla configurazione:
 // "blob" (Vercel Blob) quando è collegato su Vercel, "local" (disco) altrimenti.
-// Entrambi espongono la stessa interfaccia async: listImages, saveImage, deleteImage.
+// Entrambi espongono la stessa interfaccia async: listImages, saveImage,
+// deleteImage, renameImage.
 const { IMAGE_BACKEND } = require('../config');
 const { sanitizeFilename } = require('./storage/sanitize');
 
@@ -13,5 +14,6 @@ module.exports = {
   listImages: impl.listImages,
   saveImage: impl.saveImage,
   deleteImage: impl.deleteImage,
+  renameImage: impl.renameImage,
   sanitizeFilename,
 };

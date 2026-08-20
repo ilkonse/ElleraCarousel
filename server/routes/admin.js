@@ -8,7 +8,8 @@ const rateLimit = require('express-rate-limit');
 
 const { IMAGE_MIME_TYPES, IMAGE_EXTENSIONS, MAX_UPLOAD_BYTES } = require('../config');
 const { findByEmail } = require('../lib/adminsStore');
-const { listImages, saveImage, deleteImage } = require('../lib/images');
+const { listImages, saveImage, deleteImage, renameImage } = require('../lib/images');
+const imagesMeta = require('../lib/imagesMeta');
 const { getSettings, setIntervalSeconds } = require('../lib/settingsStore');
 const { requireAuth } = require('../middleware/requireAuth');
 const { requireAjax } = require('../middleware/requireAjax');
@@ -108,6 +109,12 @@ const MULTER_ERROR_MESSAGES = {
   LIMIT_UNEXPECTED_FILE: 'Campo di upload inatteso.',
 };
 
+// Vista admin: tutte le foto (incluse le nascoste), con flag "hidden" e
+// nell'ordine scelto dall'admin (manifesto in lib/imagesMeta.js).
+async function adminImages() {
+  return imagesMeta.getManifest(await listImages());
+}
+
 router.post('/images', requireAuth, requireAjax, (req, res) => {
   upload.array('photos', 30)(req, res, async (err) => {
     if (err) {
@@ -120,9 +127,10 @@ router.post('/images', requireAuth, requireAjax, (req, res) => {
       // caricati nella stessa richiesta finiscano per collidere.
       for (const file of req.files || []) {
         const saved = await saveImage(file.buffer, file.originalname, file.mimetype);
+        await imagesMeta.appendEntry(saved.filename);
         uploaded.push(saved.filename);
       }
-      res.json({ ok: true, uploaded, images: await listImages() });
+      res.json({ ok: true, uploaded, images: await adminImages() });
     } catch (uploadErr) {
       console.error(uploadErr);
       res.status(500).json({ error: 'Upload fallito.' });
@@ -138,13 +146,83 @@ router.delete('/images/:filename', requireAuth, requireAjax, async (req, res) =>
     if (err.code === 'ENOENT') return res.status(404).json({ error: 'File non trovato.' });
     return res.status(400).json({ error: err.message || 'Impossibile eliminare il file.' });
   }
-  res.json({ ok: true, images: await listImages() });
+  await imagesMeta.removeEntry(req.params.filename);
+  res.json({ ok: true, images: await adminImages() });
+});
+
+// --- Rinomina immagine ---
+router.post('/images/:filename/rename', requireAuth, requireAjax, async (req, res) => {
+  const newName = req.body && req.body.filename;
+  if (!newName || !String(newName).trim()) {
+    return res.status(400).json({ error: 'Nome non valido.' });
+  }
+  try {
+    const renamed = await renameImage(req.params.filename, String(newName).trim());
+    await imagesMeta.renameEntry(req.params.filename, renamed.filename);
+    res.json({ ok: true, images: await adminImages() });
+  } catch (err) {
+    if (err.code === 'ENOENT') return res.status(404).json({ error: 'File non trovato.' });
+    res.status(400).json({ error: err.message || 'Impossibile rinominare il file.' });
+  }
+});
+
+// --- Riordino manuale (drag & drop) ---
+router.post('/images/order', requireAuth, requireAjax, async (req, res) => {
+  const order = req.body && req.body.order;
+  if (!Array.isArray(order) || order.some((f) => typeof f !== 'string')) {
+    return res.status(400).json({ error: 'Ordine non valido.' });
+  }
+  try {
+    const current = await listImages();
+    const currentNames = new Set(current.map((img) => img.filename));
+    const isPermutation =
+      order.length === currentNames.size && order.every((f) => currentNames.has(f)) &&
+      new Set(order).size === order.length;
+    if (!isPermutation) {
+      return res.status(400).json({ error: "L'ordine non corrisponde alle foto esistenti." });
+    }
+    await imagesMeta.setOrder(order);
+    res.json({ ok: true, images: await adminImages() });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Errore interno.' });
+  }
+});
+
+// --- Azioni di massa sulla selezione (nascondi / mostra / elimina) ---
+router.post('/images/bulk', requireAuth, requireAjax, async (req, res) => {
+  const { filenames, action } = req.body || {};
+  if (!Array.isArray(filenames) || filenames.length === 0) {
+    return res.status(400).json({ error: 'Nessuna foto selezionata.' });
+  }
+  if (!['hide', 'show', 'delete'].includes(action)) {
+    return res.status(400).json({ error: 'Azione non valida.' });
+  }
+  try {
+    if (action === 'hide') {
+      await imagesMeta.setHidden(filenames, true);
+    } else if (action === 'show') {
+      await imagesMeta.setHidden(filenames, false);
+    } else {
+      for (const filename of filenames) {
+        try {
+          await deleteImage(filename);
+        } catch (err) {
+          if (err.code !== 'ENOENT') throw err;
+        }
+        await imagesMeta.removeEntry(filename);
+      }
+    }
+    res.json({ ok: true, images: await adminImages() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Impossibile completare l'azione." });
+  }
 });
 
 // --- Lista immagini (vista admin, identica a quella pubblica ma dietro login) ---
 router.get('/images', requireAuth, async (req, res, next) => {
   try {
-    res.json({ images: await listImages(), settings: await getSettings() });
+    res.json({ images: await adminImages(), settings: await getSettings() });
   } catch (err) {
     next(err);
   }
