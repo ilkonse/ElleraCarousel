@@ -37,8 +37,7 @@
     emptyState.hidden = true;
 
     currentIndex = (currentIndex + 1) % images.length;
-    const filename = images[currentIndex];
-    const src = `/images/${encodeURIComponent(filename)}`;
+    const src = images[currentIndex].url;
 
     try {
       await preload(src);

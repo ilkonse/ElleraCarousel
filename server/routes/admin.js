@@ -1,20 +1,14 @@
 'use strict';
 
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 
-const {
-  IMAGES_DIR,
-  IMAGE_MIME_TYPES,
-  IMAGE_EXTENSIONS,
-  MAX_UPLOAD_BYTES,
-} = require('../config');
+const { IMAGE_MIME_TYPES, IMAGE_EXTENSIONS, MAX_UPLOAD_BYTES } = require('../config');
 const { findByEmail } = require('../lib/adminsStore');
-const { listImages, sanitizeFilename, resolveImagePath } = require('../lib/images');
+const { listImages, saveImage, deleteImage } = require('../lib/images');
 const { getSettings, setIntervalSeconds } = require('../lib/settingsStore');
 const { requireAuth } = require('../middleware/requireAuth');
 const { requireAjax } = require('../middleware/requireAjax');
@@ -36,34 +30,38 @@ const loginLimiter = rateLimit({
   message: { error: 'Troppi tentativi di accesso. Riprova tra qualche minuto.' },
 });
 
-router.post('/login', loginLimiter, requireAjax, async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email e password sono obbligatorie.' });
-  }
+router.post('/login', loginLimiter, requireAjax, async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email e password sono obbligatorie.' });
+    }
 
-  const admin = findByEmail(email);
-  // Messaggio identico sia se l'email non esiste sia se la password è errata,
-  // per non rivelare quali email sono registrate come admin.
-  const genericError = { error: 'Credenziali non valide.' };
-  if (!admin) {
-    // Esegue comunque un confronto bcrypt "a vuoto" per non far trapelare
-    // tramite il tempo di risposta quali email esistono.
-    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
-    return res.status(401).json(genericError);
-  }
+    const admin = await findByEmail(email);
+    // Messaggio identico sia se l'email non esiste sia se la password è errata,
+    // per non rivelare quali email sono registrate come admin.
+    const genericError = { error: 'Credenziali non valide.' };
+    if (!admin) {
+      // Esegue comunque un confronto bcrypt "a vuoto" per non far trapelare
+      // tramite il tempo di risposta quali email esistono.
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      return res.status(401).json(genericError);
+    }
 
-  const ok = await bcrypt.compare(password, admin.passwordHash);
-  if (!ok) {
-    return res.status(401).json(genericError);
-  }
+    const ok = await bcrypt.compare(password, admin.passwordHash);
+    if (!ok) {
+      return res.status(401).json(genericError);
+    }
 
-  req.session.regenerate((err) => {
-    if (err) return res.status(500).json({ error: 'Errore interno, riprova.' });
-    req.session.adminId = admin.id;
-    req.session.email = admin.email;
-    res.json({ ok: true, email: admin.email });
-  });
+    req.session.regenerate((err) => {
+      if (err) return res.status(500).json({ error: 'Errore interno, riprova.' });
+      req.session.adminId = admin.id;
+      req.session.email = admin.email;
+      res.json({ ok: true, email: admin.email });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post('/logout', requireAjax, (req, res) => {
@@ -78,9 +76,9 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 // --- Impostazioni carosello ---
-router.post('/settings', requireAuth, requireAjax, (req, res) => {
+router.post('/settings', requireAuth, requireAjax, async (req, res) => {
   try {
-    const settings = setIntervalSeconds(req.body && req.body.intervalSeconds);
+    const settings = await setIntervalSeconds(req.body && req.body.intervalSeconds);
     res.json(settings);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -88,26 +86,8 @@ router.post('/settings', requireAuth, requireAjax, (req, res) => {
 });
 
 // --- Upload immagini ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    fs.mkdirSync(IMAGES_DIR, { recursive: true });
-    cb(null, IMAGES_DIR);
-  },
-  filename: (req, file, cb) => {
-    const base = sanitizeFilename(file.originalname);
-    const ext = path.extname(base);
-    const stem = base.slice(0, base.length - ext.length);
-    let candidate = base;
-    let n = 2;
-    // Evita di sovrascrivere silenziosamente una foto esistente con lo stesso nome.
-    while (fs.existsSync(path.join(IMAGES_DIR, candidate))) {
-      candidate = `${stem}-${n}${ext}`;
-      n += 1;
-    }
-    cb(null, candidate);
-  },
-});
-
+// Sempre in memoria: il modulo lib/images.js si occupa di scrivere il buffer
+// sul backend giusto (disco locale o Vercel Blob).
 function fileFilter(req, file, cb) {
   const ext = path.extname(file.originalname).toLowerCase();
   if (!IMAGE_MIME_TYPES.has(file.mimetype) || !IMAGE_EXTENSIONS.has(ext)) {
@@ -117,7 +97,7 @@ function fileFilter(req, file, cb) {
 }
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 30 },
 });
@@ -129,36 +109,45 @@ const MULTER_ERROR_MESSAGES = {
 };
 
 router.post('/images', requireAuth, requireAjax, (req, res) => {
-  upload.array('photos', 30)(req, res, (err) => {
+  upload.array('photos', 30)(req, res, async (err) => {
     if (err) {
       const message = MULTER_ERROR_MESSAGES[err.code] || err.message || 'Upload fallito.';
       return res.status(400).json({ error: message });
     }
-    const files = (req.files || []).map((f) => f.filename);
-    res.json({ ok: true, uploaded: files, images: listImages() });
+    try {
+      const uploaded = [];
+      // Un file alla volta: evita che due file con lo stesso nome "base"
+      // caricati nella stessa richiesta finiscano per collidere.
+      for (const file of req.files || []) {
+        const saved = await saveImage(file.buffer, file.originalname, file.mimetype);
+        uploaded.push(saved.filename);
+      }
+      res.json({ ok: true, uploaded, images: await listImages() });
+    } catch (uploadErr) {
+      console.error(uploadErr);
+      res.status(500).json({ error: 'Upload fallito.' });
+    }
   });
 });
 
 // --- Eliminazione immagine ---
-router.delete('/images/:filename', requireAuth, requireAjax, (req, res) => {
-  let fullPath;
+router.delete('/images/:filename', requireAuth, requireAjax, async (req, res) => {
   try {
-    fullPath = resolveImagePath(req.params.filename);
+    await deleteImage(req.params.filename);
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    if (err.code === 'ENOENT') return res.status(404).json({ error: 'File non trovato.' });
+    return res.status(400).json({ error: err.message || 'Impossibile eliminare il file.' });
   }
-  fs.unlink(fullPath, (err) => {
-    if (err) {
-      if (err.code === 'ENOENT') return res.status(404).json({ error: 'File non trovato.' });
-      return res.status(500).json({ error: 'Impossibile eliminare il file.' });
-    }
-    res.json({ ok: true, images: listImages() });
-  });
+  res.json({ ok: true, images: await listImages() });
 });
 
 // --- Lista immagini (vista admin, identica a quella pubblica ma dietro login) ---
-router.get('/images', requireAuth, (req, res) => {
-  res.json({ images: listImages(), settings: getSettings() });
+router.get('/images', requireAuth, async (req, res, next) => {
+  try {
+    res.json({ images: await listImages(), settings: await getSettings() });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

@@ -27,6 +27,35 @@ if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.includes('cambia-q
   }
 }
 
+// Backend di storage per foto/dati: rilevati automaticamente dalla presenza
+// delle variabili d'ambiente che Vercel inietta quando si collega un Blob
+// store e un database Redis (KV) al progetto. In locale, senza queste
+// variabili, si usa disco locale + file JSON (comportamento invariato).
+// Supporta sia i nomi storici di Vercel KV sia quelli dell'integrazione
+// Redis del Vercel Marketplace (Upstash), che possono variare leggermente.
+const REDIS_URL =
+  process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+const REDIS_TOKEN =
+  process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+
+const DATA_BACKEND = REDIS_URL && REDIS_TOKEN ? 'redis' : 'local';
+const IMAGE_BACKEND = process.env.BLOB_READ_WRITE_TOKEN ? 'blob' : 'local';
+
+if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+  if (DATA_BACKEND === 'local') {
+    console.warn(
+      'Attenzione: nessun database Redis/KV collegato su Vercel — admin e ' +
+      'impostazioni verranno scritti su un filesystem effimero e andranno persi.'
+    );
+  }
+  if (IMAGE_BACKEND === 'local') {
+    console.warn(
+      'Attenzione: nessun Vercel Blob store collegato — le foto caricate ' +
+      'andranno perse ad ogni nuovo deploy o riavvio a freddo.'
+    );
+  }
+}
+
 module.exports = {
   ROOT_DIR,
   DATA_DIR,
@@ -44,4 +73,8 @@ module.exports = {
   SESSION_SECRET: process.env.SESSION_SECRET || 'dev-only-insecure-secret',
   COOKIE_SECURE: process.env.COOKIE_SECURE === 'true',
   SITE_NAME: process.env.SITE_NAME || 'Ellera Polcanto',
+  DATA_BACKEND,
+  IMAGE_BACKEND,
+  REDIS_URL,
+  REDIS_TOKEN,
 };

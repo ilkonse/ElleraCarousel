@@ -163,18 +163,18 @@
       gallery.innerHTML = '<p class="empty-gallery">Nessuna foto caricata.</p>';
       return;
     }
-    images.forEach((filename) => {
-      gallery.appendChild(buildPhotoCard(filename));
+    images.forEach((image) => {
+      gallery.appendChild(buildPhotoCard(image));
     });
   }
 
-  function buildPhotoCard(filename) {
+  function buildPhotoCard({ filename, url }) {
     const card = document.createElement('div');
     card.className = 'photo-card';
 
     const img = document.createElement('img');
     img.className = 'thumb';
-    img.src = `/images/${encodeURIComponent(filename)}`;
+    img.src = url;
     img.alt = filename;
     img.loading = 'lazy';
 

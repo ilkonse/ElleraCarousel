@@ -70,7 +70,7 @@ async function main() {
     console.error('Email non valida.');
     process.exit(1);
   }
-  if (findByEmail(email)) {
+  if (await findByEmail(email)) {
     console.error('Esiste già un admin con questa email.');
     process.exit(1);
   }
@@ -87,7 +87,7 @@ async function main() {
   }
 
   const passwordHash = bcrypt.hashSync(password, 12);
-  const admin = addAdmin({ email, passwordHash });
+  const admin = await addAdmin({ email, passwordHash });
   console.log(`Admin creato: ${admin.email}`);
   process.exit(0);
 }
