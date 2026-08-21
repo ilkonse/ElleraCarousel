@@ -546,6 +546,34 @@ button:disabled {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Alternativa alla maniglia di trascinamento per il tocco: nascosta di
+   default, mostrata al posto di .drag-handle sotto i 760px (vedi media
+   query in fondo al file). */
+.move-controls {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: none;
+  gap: 4px;
+}
+
+.move-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--bone-soft);
+  background: rgba(22, 32, 26, 0.55);
+  border-radius: 6px;
+}
+
+.move-btn:disabled {
+  opacity: 0.3;
+}
+
 .hidden-badge {
   position: absolute;
   bottom: 10px;
@@ -911,5 +939,15 @@ button:disabled {
 
   .action-half {
     padding: 9px 4px;
+  }
+
+  /* Il trascinamento non risponde al tocco: mostra i pulsanti sposta
+     su/giù al posto della maniglia di trascinamento (inutile su mobile). */
+  .drag-handle {
+    display: none;
+  }
+
+  .move-controls {
+    display: flex;
   }
 }

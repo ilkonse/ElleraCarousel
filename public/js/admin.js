@@ -563,10 +563,44 @@
     dragHandle.className = 'drag-handle';
     dragHandle.textContent = '⠿';
 
+    // Alternativa al trascinamento per il tocco: le API HTML5 drag&drop non
+    // rispondono sui browser mobile, quindi su schermi piccoli (vedi CSS)
+    // questi pulsanti prendono il posto della maniglia di trascinamento.
+    const moveControls = document.createElement('div');
+    moveControls.className = 'move-controls';
+
+    const moveUpBtn = document.createElement('button');
+    moveUpBtn.type = 'button';
+    moveUpBtn.className = 'move-btn';
+    moveUpBtn.title = 'Sposta prima';
+    moveUpBtn.textContent = '▲';
+    moveUpBtn.disabled = index === 0;
+    moveUpBtn.addEventListener('click', () => {
+      if (index === 0) return;
+      moveTo(filename, index - 1);
+      persistOrder();
+    });
+
+    const moveDownBtn = document.createElement('button');
+    moveDownBtn.type = 'button';
+    moveDownBtn.className = 'move-btn';
+    moveDownBtn.title = 'Sposta dopo';
+    moveDownBtn.textContent = '▼';
+    moveDownBtn.disabled = index === state.images.length - 1;
+    moveDownBtn.addEventListener('click', () => {
+      if (index === state.images.length - 1) return;
+      moveTo(filename, index + 1);
+      persistOrder();
+    });
+
+    moveControls.appendChild(moveUpBtn);
+    moveControls.appendChild(moveDownBtn);
+
     thumbWrap.appendChild(img);
     thumbWrap.appendChild(selectBtn);
     thumbWrap.appendChild(posBadge);
     thumbWrap.appendChild(dragHandle);
+    thumbWrap.appendChild(moveControls);
 
     if (hidden) {
       const hiddenBadge = document.createElement('span');
